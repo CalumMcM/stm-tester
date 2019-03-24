@@ -1,6 +1,7 @@
 import sys, os, getopt
 import argparse
 import subprocess
+import signal
 from subprocess import Popen, PIPE
 
 class bcolors:
@@ -23,31 +24,35 @@ def run(FakeSensor, FakeMotors, FakeEmbrakes):
 
 def noSensors():
     run_command = './hyped -v -d --fake_sensors=0 --fake_motors=0 --fake_embrakes=0'
+    print (bcolors.BOLD + "\nRUNNING TEST" + bcolors.ENDC + "\n" + run_command)
     p = Popen([run_command], shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
-    error = True
+    error = False
     timer = 0
-    while (timer < 3000 and error):
+    while (timer < 3000 and not error):
         line = p.stdout.readline().strip()
         if "ERR[MOTOR]" in line:
-            error = False
+            error = True
         timer += 1
-    if (not error):
-        print(bcolors.WARNING + "System failed with error:\n" + bcolors.ENDC + line)
+    os.kill(p.pid, signal.SIGINT)
+    if (error):
+        print(bcolors.FAIL + "System failed with error:\n" + bcolors.ENDC + line)
     else:
         print(bcolors.OKGREEN + "System worked" + bcolors.ENDC)
 
 def allSensors():
     run_command = './hyped -v -d --fake_sensors=1 --fake_motors=1 --fake_embrakes=1'
+    print (bcolors.BOLD + "\nRUNNING TEST" + bcolors.ENDC + "\n" + run_command)
     p = Popen([run_command], shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
-    error = True
+    error = False
     timer = 0
-    while (timer < 3000 and error):
+    while (timer < 2 and not error):
         line = p.stdout.readline().strip()
         if "ERR[MOTOR]" in line:
-            error = False
+            error = True
         timer += 1
-    if (not error):
-        print(bcolors.WARNING + "System failed with error:\n" + bcolors.ENDC + line)
+    os.kill(p.pid, signal.SIGINT)
+    if (error):
+        print(bcolors.FAIL + "System failed with error:\n" + bcolors.ENDC + line)
     else:
         print(bcolors.OKGREEN + "System worked" + bcolors.ENDC)
     
